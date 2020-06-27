@@ -3,10 +3,9 @@ import std / [
 ]
 
 import compiler / [
-  options, idents, llstream, pathutils
-] 
+  options, idents, llstream, pathutils, lexer
+]
 
-import lexer
 const
   ZeroWidthSpace = "​"
   Prelude = fmt"""
