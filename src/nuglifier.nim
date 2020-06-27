@@ -48,6 +48,12 @@ proc randomCase(word: string): string =
     else:
       result.add toUpperAscii(letter)
 
+proc replaceWithOffset(src: var string, offset: int, tok: TToken, newWord: string): int = 
+  let origLen = tok.offsetB - tok.offsetA
+  let newLen = newWord.len - 1
+  src[tok.offsetA + offset .. tok.offsetB + offset] = newWord
+  result = newLen - origLen
+
 proc processStuff(src: string, mode: ProcessingMode): string = 
   var cache = newIdentCache()
   var config = newConfigRef()
@@ -65,20 +71,14 @@ proc processStuff(src: string, mode: ProcessingMode): string =
       let newWord = 
         if mode == EmojiCursed: randomEmoji(tok.ident.s)
         else: randomCase(tok.ident.s)
-      let origLen = tok.offsetB - tok.offsetA
-      let newLen = newWord.len - 1
-      result[tok.offsetA + myOffset .. tok.offsetB + myOffset] = newWord
-      myOffset += newLen - origLen
+      myOffset += result.replaceWithOffset(myOffset, tok, newWord)
     elif tok.tokType == tkStrLit:
       let old = tok.literal
-      var newugly = "\""
+      var newUgly = "\""
       for c in old:
-        newugly.add "\\x" & toHex($c)
-      newugly.add "\""
-      let origLen = tok.offsetB - tok.offsetA
-      let newLen = newugly.len - 1
-      result[tok.offsetA + myOffset .. tok.offsetB + myOffset] = newugly
-      myOffset += newLen - origLen
+        newUgly.add "\\x" & toHex($c)
+      newUgly.add "\""
+      myOffset += result.replaceWithOffset(myOffset, tok, newUgly)
     rawGetTok(L, tok)
 
 proc main(data: string, mode: ProcessingMode): string = 
