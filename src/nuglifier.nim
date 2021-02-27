@@ -1,8 +1,8 @@
-import std / [
+import std/[
   os, strutils, strformat, random, parseutils, tables
 ]
 
-import compiler / [
+import compiler/[
   options, idents, llstream, pathutils, lexer
 ]
 
@@ -48,7 +48,7 @@ proc randomCase(word: string): string =
     else:
       result.add toUpperAscii(letter)
 
-proc replaceWithOffset(src: var string, offset: int, tok: TToken, newWord: string): int = 
+proc replaceWithOffset(src: var string, offset: int, tok: Token, newWord: string): int = 
   let origLen = tok.offsetB - tok.offsetA
   let newLen = newWord.len - 1
   src[tok.offsetA + offset .. tok.offsetB + offset] = newWord
@@ -61,8 +61,8 @@ proc processStuff(src: string, mode: ProcessingMode): string =
   var stream = llStreamOpen(src)
   result = src
   var 
-    L: TLexer
-    tok: TToken
+    L: Lexer
+    tok: Token
   openLexer(L, f, stream, cache, config)
   rawGetTok(L, tok)
   var myOffset = 0
@@ -79,6 +79,10 @@ proc processStuff(src: string, mode: ProcessingMode): string =
         newUgly.add "\\x" & toHex($c)
       newUgly.add "\""
       myOffset += result.replaceWithOffset(myOffset, tok, newUgly)
+    elif tok.tokType == tkCharLit:
+      let newUgly = "'\\x" & toHex(tok.literal) & "'"
+      myOffset += result.replaceWithOffset(myOffset, tok, newUgly)
+
     rawGetTok(L, tok)
 
 proc main(data: string, mode: ProcessingMode): string = 
