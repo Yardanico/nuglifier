@@ -67,7 +67,28 @@ proc processStuff(src: string, mode: ProcessingMode): string =
   rawGetTok(L, tok)
   var myOffset = 0
   while tok.tokType != tkEof:
-    if (tok.tokType == tkSymbol or tok.tokType in tokKeywordLow .. tokKeywordHigh):# and tok.ident.s notin Blacklist:
+    if tok.tokType == tkImport:
+      # Randomize casing for the "import" keyword 
+      let newWord = 
+        if mode == EmojiCursed: randomEmoji(tok.ident.s)
+        else: randomCase(tok.ident.s)
+      myOffset += result.replaceWithOffset(myOffset, tok, newWord)
+      rawGetTok(L, tok)
+      # If next token is std, then we have an import like "import std/stuff"
+      if tok.tokType == tkSymbol:
+        if tok.ident.s in ["std", "pkg", ".", ".."]:
+          # Skip std, etc
+          rawGetTok(L, tok)
+          # Skip slash
+          rawGetTok(L, tok)
+          # Skip all modules inside the std/[a, b, c]
+          if $tok == "[":
+            rawGetTok(L, tok)
+            while $tok != "]":
+              rawGetTok(L, tok)
+      elif tok.tokType == tkOpr and tok.ident.s in ["./", "../"]:
+        rawGetTok(L, tok)
+    elif (tok.tokType == tkSymbol or tok.tokType in tokKeywordLow .. tokKeywordHigh):# and tok.ident.s notin Blacklist:
       let newWord = 
         if mode == EmojiCursed: randomEmoji(tok.ident.s)
         else: randomCase(tok.ident.s)
